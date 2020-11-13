@@ -1,286 +1,533 @@
 sap.ui.define([
-	"sap/ui/core/mvc/Controller",
-	"sap/ui/core/routing/History",
-	"sap/ui/model/json/JSONModel",
-	"sap/m/MessageToast",
-	"sap/ui/base/ManagedObject",
-	"sap/ui/base/Event"
+  "sap/ui/core/mvc/Controller",
+  "sap/ui/core/routing/History",
+  "sap/ui/model/json/JSONModel",
+  "sap/m/MessageToast",
+  "sap/ui/base/ManagedObject",
+  "sap/ui/base/Event"
 ], function (Controller, History, JSONModel, MessageToast, ManagedObject, Event) {
-	"use strict";
+  "use strict";
 
-	return Controller.extend("i40-aas-registry-ui.i40-aas-registry-ui.controller.CreateSemanticProtocol", {
+  return Controller.extend("i40-aas-registry-ui.i40-aas-registry-ui.controller.CreateSemanticProtocol", {
 
-		onInit: function (oEvent) {
+    onInit: function (oEvent) {
 
-			this.initiateModel();
-		},
+      this.initiateModel();
+    },
 
-		initiateModel: function (oEvent) {
-			this._oPnl = this.byId("idPnl");
+    initiateModel: function (oEvent) {
+      this._oPnl = this.byId("idPnl");
 
-			// Use Object Lib for IdType Dropdown menu
-			var oIdTypes = aas.IdTypeEnum
-			var IdTypeKeys = Object.keys(oIdTypes);
-	  
-			var aIdTypes = new Array();
-			for (var i = 0; i < IdTypeKeys.length; i++) {
-			  var oObject = {};
-			  oObject["TypeId"] = IdTypeKeys[i];
-			  oObject["Name"] = IdTypeKeys[i];
-					  aIdTypes.push(JSON.parse(JSON.stringify(oObject)));
-				  }
+      // Use Object Lib for IdType Dropdown menu
+      var oIdTypes = aas.IdTypeEnum
+      var IdTypeKeys = Object.keys(oIdTypes);
 
-			var aAASDescriptors = (function () {
-				var aAASDescriptors = null;
-				$.ajax({
-					'async': false,
-					'global': false,
-					'url': "/AASDescriptors",
-					'dataType': "json",
-					'success': function (data) {
-						aAASDescriptors = data;
-					}
-				});
-				return aAASDescriptors;
-			})();
+      var aIdTypes = new Array();
+      for (var i = 0; i < IdTypeKeys.length; i++) {
+        var oObject = {};
+        oObject["TypeId"] = IdTypeKeys[i];
+        oObject["Name"] = IdTypeKeys[i];
+        aIdTypes.push(JSON.parse(JSON.stringify(oObject)));
+      }
 
-			var aCreateSPFormular = {
-				"identification": {
-					"id": "",
-					"idType": "IRI"
-				},
-				"roles": []
-			};
+      var aAASDescriptors = (function () {
+        var aAASDescriptors = null;
+        $.ajax({
+          'async': false,
+          'global': false,
+          'url': "/AASDescriptors",
+          'dataType': "json",
+          'success': function (data) {
+            aAASDescriptors = data;
+          }
+        });
+        return aAASDescriptors;
+      })();
 
-			var oData = {
-				"IdTypeCollection": aIdTypes,
+      var aCreateSPFormular = {
+        "identification": {
+          "id": "",
+          "idType": "IRI"
+        },
+        "roles": []
+      };
 
-				"AASDescriptors": aAASDescriptors,
+      var aSemanticProtocols = (function () {
+        var aSemanticProtocols = null;
+        $.ajax({
+          'async': false,
+          'global': false,
+          'url': "/semanticProtocols",
+          'dataType': "json",
+          'success': function (data) {
+            aSemanticProtocols = data;
+          }
+        });
+        return aSemanticProtocols;
+      })();
 
-				"CreateSPFormular": aCreateSPFormular
-			};
+      var oData = {
+        "IdTypeCollection": aIdTypes,
 
-			var oModel = new JSONModel(oData);
-			this.getView().setModel(oModel);
-		},
+        "AASDescriptors": aAASDescriptors,
 
-		onAddDescriptorDropdown: function () {
-			var oSelect = new sap.m.Select({
-				forceSelection: false,
-				width: "250px"
+        "CreateSPFormular": aCreateSPFormular,
 
-			});
-			var oItemTemplate = new sap.ui.core.Item({
-				text: '{identification/id}', // here goes your binding for the property "Name" of your item
-				key: '{key}' //not needed???
-			});
+        "SemanticProtocolsCollection": aSemanticProtocols
+      };
 
-			var oSorter = new sap.ui.model.Sorter('identification/id');
+      var oModel = new JSONModel(oData);
+      this.getView().setModel(oModel);
+    },
 
-			oSelect.bindItems({
-				path: "/AASDescriptors",
-				template: oItemTemplate,
-				sorter: oSorter,
-				templateShareable: true
+    onAddDescriptorDropdown: function () {
+      debugger;
+      var that = this;
+      var oSelect = new sap.m.Select({
+        forceSelection: false,
+        width: "250px",
+        //change: "this.onSelect(oEvent)"
+        
+        // function (oEvent) {
+        //   debugger;
+        //   var id = oEvent.getParameter("id");
+        //   var newSelectedItemText = oEvent.getParameter('selectedItem').getText();
+        //   var inputControl = that.getView().byId(id);
+        //   var descriptorDropdowns = that.getInputs().aasDescriptorSelect.getContent();
 
-			});
+        //   inputControl.setValueState(sap.ui.core.ValueState.None);
+        //   that.getInputs().addRoleButton.setEnabled(true);
 
-			var delIcon = new sap.ui.core.Icon({
-				src: "sap-icon://delete",
-				press: this.onDeleteCcMail
-			});
-			var _oCcLayout = new sap.m.FlexBox({
-				alignItems: "Center",
-				justifyContent: "Start",
-				items: [oSelect, delIcon]
-			});
-			this._oPnl.addContent(_oCcLayout);
-		},
 
-		onDeleteCcMail: function (oEvent) {
-			var rowItemContainer = oEvent.getSource().getParent();
-			rowItemContainer.destroy();
-		},
+        //   if (typeof descriptorDropdowns !== 'undefined' && descriptorDropdowns.length > 0) {
+        //     var count = 0;
+        //     for (var i = 0; i < descriptorDropdowns.length; i++) {
+        //       if (descriptorDropdowns[i].getItems()[0].getSelectedItem().getText() !== 'undefined' && newSelectedItemText === descriptorDropdowns[i].getItems()[0].getSelectedItem().getText()) {
+        //         count++;
+        //         // count = 1 is its self -> count > 1 means there is a duplicate
+        //         if (count > 1) {
+        //           inputControl.setValueState(sap.ui.core.ValueState.Error);
+        //           inputControl.setValueStateText(that.getView().getModel("i18n").getResourceBundle().getText("descriptorDuplicate"));
+        //         } else {
+        //           inputControl.setValueState(sap.ui.core.ValueState.None);
+        //         }
+        //       }
+        //     }
+        //   }
 
-		onAddRole: function () {
-			var oModel = this.getView().getModel();
-			var localdata = oModel.getProperty("/CreateSPFormular");
+        // },
 
-			var oMainObject = {};
-			oMainObject["name"] = this.getView().byId("RoleName").getValue();
-			var aMainObjectArray = new Array();
-			var oObject = {};
+      });
+      var oItemTemplate = new sap.ui.core.Item({
+        text: '{identification/id}', // here goes your binding for the property "Name" of your item
+        key: '{key}' //not needed???
+      });
 
-			//-------count of the Selects-----
-			//console.log(this.getView().byId("idPnl").getContent().length);
+      var oSorter = new sap.ui.model.Sorter('identification/id');
 
-			//--------access first Select------
-			//console.log(this.getView().byId("idPnl").getContent()[0].getItems()[0].getValue());
+      oSelect.bindItems({
+        path: "/AASDescriptors",
+        template: oItemTemplate,
+        sorter: oSorter,
+        templateShareable: true
 
-			//--------access second Select-------
-			//console.log(this.getView().byId("idPnl").getContent()[1].getItems()[0].getValue());
 
-			for (var i = 0; i < this.getView().byId("idPnl").getContent().length; i++) {
-				//console.log(this.getView().byId("idPnl").getContent()[i].getItems()[0].getValue());
-				oObject["id"] = this.getView().byId("idPnl").getContent()[i].getItems()[0].getSelectedItem().getText();
-				aMainObjectArray.push(JSON.parse(JSON.stringify(oObject)));
-			}
+      });
 
-			oMainObject["aasDescriptorIds"] = aMainObjectArray;
+      var delIcon = new sap.ui.core.Icon({
+        src: "sap-icon://delete",
+        press: this.onDeleteCcMail
+      });
+      var _oCcLayout = new sap.m.FlexBox({
+        alignItems: "Center",
+        justifyContent: "Start",
+        items: [oSelect, delIcon]
+      });
+      this._oPnl.addContent(_oCcLayout);
 
-			localdata.roles.push(oMainObject);
-			oModel.setProperty("/CreateSPFormular", localdata);
-			this.resetDescriptorDropdown();
-			MessageToast.show(this.getView().getModel(
-				"i18n").getResourceBundle().getText("roleCreated"));
-			this.getView().byId("RoleName").setValue("");
+      // var descriptorDropdowns = this.getInputs().aasDescriptorSelect.getContent();
 
-			this.showDetailsOfLastAddedRole();
-			this.enableSplitscreen();
-		},
+      // if (typeof descriptorDropdowns !== 'undefined' && descriptorDropdowns.length > 0) {
 
-		showDetailsOfLastAddedRole: function () {
-			var oModel = this.getView().getModel();
-			var lastAddedRole = oModel.getProperty("/CreateSPFormular/roles").length - 1;
-			var newRolePath = "/CreateSPFormular/roles/" + lastAddedRole;
-			this.getView().byId("roleDetail").bindElement(newRolePath);
-		},
+      //   for (var i = 0; i < descriptorDropdowns.length; i++) {
+      //     var select = descriptorDropdowns[i].getItems()[0];
+      //     select.attachChange(this.onSelect())
 
-		showDetailsOfRoleWithIndex: function (index) {
-			var oModel = this.getView().getModel();
-			var roleCount = oModel.getProperty("/CreateSPFormular/roles").length;
-			if (index <= 0) {
-				this.getView().byId("roleDetail").bindElement("/CreateSPFormular/roles/" + "0");
-				if (roleCount === 0) {
-					this.disableSplitscreen();
-				}
-			} else if (index > roleCount - 1) {
-				this.showDetailsOfLastAddedRole();
-			} else {
-				this.getView().byId("roleDetail").bindElement("/CreateSPFormular/roles/" + index);
-			}
-		},
+      //   }
 
-		enableSplitscreen: function () {
-			this.getView().byId("roleDetail").setVisible(true);
-			this.getView().byId("splitterSize").setSize("500px");
-			this.getView().byId("splitterSize").setResizable(true);
-		},
+      // }
 
-		disableSplitscreen: function () {
-			this.getView().byId("roleDetail").setVisible(false);
-			this.getView().byId("splitterSize").setSize("100%");
-			this.getView().byId("splitterSize").setResizable(false);
-		},
+    },
 
-		onRoleObjectItem: function (oEvent) {
-			var oItem = oEvent.getSource();
-			var oCtx = oItem.getBindingContext();
-			var path = oCtx.getPath();
-			this.getView().byId("roleDetail").bindElement(path);
-		},
+    onDeleteCcMail: function (oEvent) {
+      var rowItemContainer = oEvent.getSource().getParent();
+      rowItemContainer.destroy();
+    },
 
-		onDeleteRoleObject: function (oEvent) {
-			var oItem = oEvent.getParameter('listItem');
-			var oCtx = oItem.getBindingContext();
-			var path = oCtx.getPath();
-			var idx = path.charAt(path.lastIndexOf('/') + 1);
+    onAddRole: function () {
+      var descriptorDropdowns = this.getInputs().aasDescriptorSelect.getContent();
 
-			var oModel = this.getView().getModel();
-			var pathToRoles = oModel.getProperty("/CreateSPFormular/roles");
-			if (idx !== -1) {
+      if (this.getInputs().inputRoleName.getValue() === "") {
+        this.getInputs().inputRoleName.setValueState(sap.ui.core.ValueState.Error);
+        this.getInputs().inputRoleName.setValueStateText(this.getView().getModel("i18n").getResourceBundle().getText("cantBeEmpty"));
+        MessageToast.show(this.getView().getModel("i18n").getResourceBundle().getText("cantBeEmpty"));
+        this.checkAddRoleButton();
+      } else if (this.aasDescriptorDuplicate()) { //TODO Ändern auf aasDescriptorDuplicate
+        debugger;
+        MessageToast.show(this.getView().getModel("i18n").getResourceBundle().getText("descriptorDuplicate"));
+        for (var i = 0; i < descriptorDropdowns.length; i++) {
+          descriptorDropdowns[i].getItems()[0].setValueState(sap.ui.core.ValueState.Error);
+          descriptorDropdowns[i].getItems()[0].setValueStateText(this.getView().getModel("i18n").getResourceBundle().getText("descriptorDuplicate"));
+          //descriptorDropdowns[j].getItems()[0].getSelectedItem().getText()
+        }
+      } else {
+        var oModel = this.getView().getModel();
+        var localdata = oModel.getProperty("/CreateSPFormular");
 
-				pathToRoles.splice(idx, 1);
+        var oMainObject = {};
+        oMainObject["name"] = this.getView().byId("InputRoleName").getValue();
+        var aMainObjectArray = new Array();
+        var oObject = {};
 
-				oModel.setProperty("/CreateSPFormular/roles", pathToRoles);
+        //-------count of the Selects-----
+        //console.log(this.getView().byId("idPnl").getContent().length);
 
-				var oList = this.getView().byId("RoleList");
-				oList.getBinding("items").refresh(true);
-			}
-			this.showDetailsOfRoleWithIndex(idx);
-		},
+        //--------access first Select------
+        //console.log(this.getView().byId("idPnl").getContent()[0].getItems()[0].getValue());
 
-		onNavBack: function () {
-			//this.resetScreenToInitial(); clear Screen not onNavBack??
+        //--------access second Select-------
+        //console.log(this.getView().byId("idPnl").getContent()[1].getItems()[0].getValue());
 
-			var oHistory = History.getInstance();
-			var sPreviousHash = oHistory.getPreviousHash();
+        for (var i = 0; i < descriptorDropdowns.length; i++) {
+          //console.log(this.getView().byId("idPnl").getContent()[i].getItems()[0].getValue());
+          oObject["id"] = descriptorDropdowns[i].getItems()[0].getSelectedItem().getText();
+          aMainObjectArray.push(JSON.parse(JSON.stringify(oObject)));
+        }
 
-			if (sPreviousHash !== undefined) {
-				window.history.go(-1);
-			} else {
-				var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-				oRouter.navTo("overview", true);
-			}
+        oMainObject["aasDescriptorIds"] = aMainObjectArray;
 
-		},
+        localdata.roles.push(oMainObject);
+        oModel.setProperty("/CreateSPFormular", localdata);
+        this.resetDescriptorDropdown();
+        MessageToast.show(this.getView().getModel("i18n").getResourceBundle().getText("roleCreated"));
+        this.getView().byId("InputRoleName").setValue("");
 
-		onCreateSemanticProtocol: function () {
-			var that = this;
-			var lv_data = this.getView().getModel().getProperty("/CreateSPFormular");
-			var lv_dataString = JSON.stringify(lv_data);
-			//console.warn("lv_dataString = " + lv_dataString);
+        this.showDetailsOfLastAddedRole();
+        this.enableSplitscreen();
+      }
+    },
 
-			$.ajax({
-				url: '/semanticProtocols',
-				type: 'PUT',
-				//>>>>>>>>>>>>>>>>>>>>>>>>>>> Only needed for POST-Request >>>>>>>>>>>>>>>>>>>>>>>
-				/*
-				headers: {
-					"x-CSRF-Token": this.myToken
-				},
-				*/
-				//<<<<<<<<<<<<<<<<<<<<<<<<<<<< Only needed for POST-Resquest <<<<<<<<<<<<<<<<<<<<<<
-				contentType: "application/json",
-				dataType: "json",
-				data: lv_dataString
-			}).always(function (data, status, response) {
-				//console.warn("data = " + data);
-				//console.warn("status = " + status);
-				//console.warn("response = " + response);
-				if (status === "success") {
-					MessageToast.show(that.getView().getModel("i18n").getResourceBundle().getText("semanticProtocolCreated"));
-					that.resetScreenToInitial();
-				} else {
-					MessageToast.show(status + ": " + response);
-				}
+    showDetailsOfLastAddedRole: function () {
+      var oModel = this.getView().getModel();
+      var lastAddedRole = oModel.getProperty("/CreateSPFormular/roles").length - 1;
+      var newRolePath = "/CreateSPFormular/roles/" + lastAddedRole;
+      this.getView().byId("roleDetail").bindElement(newRolePath);
+    },
 
-			});
+    showDetailsOfRoleWithIndex: function (index) {
+      var oModel = this.getView().getModel();
+      var roleCount = oModel.getProperty("/CreateSPFormular/roles").length;
+      if (index <= 0) {
+        this.getView().byId("roleDetail").bindElement("/CreateSPFormular/roles/" + "0");
+        if (roleCount === 0) {
+          this.disableSplitscreen();
+        }
+      } else if (index > roleCount - 1) {
+        this.showDetailsOfLastAddedRole();
+      } else {
+        this.getView().byId("roleDetail").bindElement("/CreateSPFormular/roles/" + index);
+      }
+    },
 
-		},
+    enableSplitscreen: function () {
+      this.getView().byId("roleDetail").setVisible(true);
+      this.getView().byId("splitterSize").setSize("500px");
+      this.getView().byId("splitterSize").setResizable(true);
+    },
 
-		resetDescriptorDropdown: function () {
-			var oView = this.getView();
-			var oPanel = oView.byId("idPnl");
-			var oCtx = oPanel.getContent();
+    disableSplitscreen: function () {
+      this.getView().byId("roleDetail").setVisible(false);
+      this.getView().byId("splitterSize").setSize("100%");
+      this.getView().byId("splitterSize").setResizable(false);
+    },
 
-			for (var i = 0; i < oCtx.length; i++) {
-				oCtx[i].destroy(true);
-			}
-			this.onAddDescriptorDropdown();
-		},
+    onRoleObjectItem: function (oEvent) {
+      var oItem = oEvent.getSource();
+      var oCtx = oItem.getBindingContext();
+      var path = oCtx.getPath();
+      this.getView().byId("roleDetail").bindElement(path);
+    },
 
-		resetScreenToInitial: function () {
-			this.getView().byId("RoleName").setValue("");
-			this.resetDescriptorDropdown();
-			this.initiateModel();
-			this.disableSplitscreen();
-		},
+    onDeleteRoleObject: function (oEvent) {
+      var oItem = oEvent.getParameter('listItem');
+      var oCtx = oItem.getBindingContext();
+      var path = oCtx.getPath();
+      var idx = path.charAt(path.lastIndexOf('/') + 1);
 
-		onCancelPress: function () {
-			var oHistory = History.getInstance();
-			var sPreviousHash = oHistory.getPreviousHash();
+      var oModel = this.getView().getModel();
+      var pathToRoles = oModel.getProperty("/CreateSPFormular/roles");
+      if (idx !== -1) {
 
-			if (sPreviousHash !== undefined) {
-				window.history.go(-1);
-			} else {
-				var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-				oRouter.navTo("overview", true);
-			}
-			this.resetScreenToInitial();
-			MessageToast.show(this.getView().getModel("i18n").getResourceBundle().getText("canceled"));
-		}
+        pathToRoles.splice(idx, 1);
 
-	});
+        oModel.setProperty("/CreateSPFormular/roles", pathToRoles);
+
+        var oList = this.getView().byId("RoleList");
+        oList.getBinding("items").refresh(true);
+      }
+      this.showDetailsOfRoleWithIndex(idx);
+    },
+
+    onNavBack: function () {
+      var oHistory = History.getInstance();
+      var sPreviousHash = oHistory.getPreviousHash();
+
+      if (sPreviousHash !== undefined) {
+        window.history.go(-1);
+      } else {
+        var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+        oRouter.navTo("overview", true);
+      }
+
+    },
+
+    onCreateSemanticProtocol: function () {
+      if (this.getInputs().inputSpId.getValue() === "") {
+        this.getInputs().inputSpId.setValueState(sap.ui.core.ValueState.Error);
+        this.getInputs().inputSpId.setValueStateText(this.getView().getModel("i18n").getResourceBundle().getText("cantBeEmpty"));
+        MessageToast.show(this.getView().getModel("i18n").getResourceBundle().getText("cantBeEmpty"));
+        this.checkCreateButton();
+
+      } else if (!this.roleAdded()) {
+        this.getInputs().inputRoleName.setValueState(sap.ui.core.ValueState.Warning);
+        this.getInputs().inputRoleName.setValueStateText(this.getView().getModel("i18n").getResourceBundle().getText("noRoleAdded"));
+        MessageToast.show(this.getView().getModel("i18n").getResourceBundle().getText("noRoleAdded"), {
+          duration: 5000
+        });
+      } else {
+        var that = this;
+        var lv_data = this.getView().getModel().getProperty("/CreateSPFormular");
+        var lv_dataString = JSON.stringify(lv_data);
+
+        $.ajax({
+          url: '/semanticProtocols',
+          type: 'PUT',
+          contentType: "application/json",
+          dataType: "json",
+          data: lv_dataString
+        }).always(function (data, status, response) {
+          if (status === "success") {
+            MessageToast.show(that.getView().getModel("i18n").getResourceBundle().getText("semanticProtocolCreated"));
+            that.resetScreenToInitial();
+          } else {
+            MessageToast.show(status + ": " + response);
+          }
+
+        });
+
+      }
+
+    },
+
+    resetDescriptorDropdown: function () {
+      var oView = this.getView();
+      var oPanel = oView.byId("idPnl");
+      var oCtx = oPanel.getContent();
+
+      for (var i = 0; i < oCtx.length; i++) {
+        oCtx[i].destroy(true);
+      }
+      this.onAddDescriptorDropdown();
+    },
+
+    //-----------------Begin Input Validation--------------------------//
+    getInputs: function () {
+      return {
+        inputSpId: this.getView().byId("InputSpId"),
+        inputRoleName: this.getView().byId("InputRoleName"),
+        createButton: this.getView().byId("CreateButton"),
+        addRoleButton: this.getView().byId("AddRoleButton"),
+        aasDescriptorSelect: this.getView().byId("idPnl")
+        //endpointAddress: this.getView().byId("EndpointAddress"),
+      }
+    },
+
+    //Check if the Semantic Protocol ID already exists
+    spIdDuplicate: function (spId) {
+      var SemanticProtocols = this.getView().getModel().getProperty("/SemanticProtocolsCollection")
+      for (var i = 0; i < SemanticProtocols.length; i++) {
+        if (spId === SemanticProtocols[i].identification.id) {
+          return true;
+        }
+      }
+      return false;
+    },
+
+    //Check if the Role Name already exists
+    roleNameDuplicate: function (roleName) {
+      var Roles = this.getView().getModel().getProperty("/CreateSPFormular/roles")
+      if (typeof Roles !== 'undefined' && Roles.length > 0) {
+        // the array is defined and has at least one element
+        for (var i = 0; i < Roles.length; i++) {
+          if (roleName === Roles[i].name) {
+            return true;
+          }
+        }
+
+      }
+      return false;
+
+    },
+
+    //Check if a Role is already added
+    roleAdded: function () {
+      var Roles = this.getView().getModel().getProperty("/CreateSPFormular/roles")
+      if (typeof Roles !== 'undefined' && Roles.length > 0) {
+        return true;
+      }
+      return false;
+
+    },
+
+
+
+    // Check if a AASDescriptor already is choosen in a other dropdown
+    aasDescriptorDuplicate: function () {
+      var descriptorDropdowns = this.getInputs().aasDescriptorSelect.getContent();
+
+
+      if (typeof descriptorDropdowns !== 'undefined' && descriptorDropdowns.length > 0) {
+
+        for (var i = 0; i < Math.round(descriptorDropdowns.length / 2); i++) { //Just need to compare the first half of the objects with all other objects
+          var count = 0;
+          for (var j = 0; j < descriptorDropdowns.length; j++) {
+            if (descriptorDropdowns[i].getItems()[0].getSelectedItem().getText() ===
+              descriptorDropdowns[j].getItems()[0].getSelectedItem().getText()) {
+              count++;
+              // count = 1 is its self -> count > 1 means there is a duplicate
+              if (count > 1) {
+                return true;
+              }
+            }
+          }
+        }
+
+      }
+      return false;
+
+    },
+
+    //Shows a red border around the select field as long as a duplicate selection is found
+    // onSelect(oEvent) {
+    //   debugger;
+    //   var id = oEvent.getParameter("id");
+    //   var newSelectedItemText = oEvent.getParameter('selectedItem').getText();
+    //   var inputControl = this.getView().byId(id);
+    //   var descriptorDropdowns = this.getInputs().aasDescriptorSelect.getContent();
+
+    //   inputControl.setValueState(sap.ui.core.ValueState.None);
+    //   this.getInputs().addRoleButton.setEnabled(true);
+
+
+    //   if (typeof descriptorDropdowns !== 'undefined' && descriptorDropdowns.length > 0) {
+    //     var count = 0;
+    //     for (var i = 0; i < descriptorDropdowns.length; i++) {
+    //       if (descriptorDropdowns[i].getItems()[0].getSelectedItem() !== 'null' && newSelectedItemText === descriptorDropdowns[i].getItems()[0].getSelectedItem().getText()) {
+    //         count++;
+    //         // count = 1 is its self -> count > 1 means there is a duplicate
+    //         if (count > 1) {
+    //           inputControl.setValueState(sap.ui.core.ValueState.Error);
+    //           inputControl.setValueStateText(this.getView().getModel("i18n").getResourceBundle().getText("descriptorDuplicate"));
+    //         } else {
+    //           inputControl.setValueState(sap.ui.core.ValueState.None);
+    //         }
+    //       }
+    //     }
+    //   }
+
+    // },
+
+
+    //Shows a red border around the input field as long as a empty or duplicate entry is found
+    onLiveChange(oEvent) {
+      var id = oEvent.getParameter("id");
+      var newValue = oEvent.getParameter("newValue");
+      var inputControl = this.getView().byId(id);
+
+      inputControl.setValueState(sap.ui.core.ValueState.None);
+      this.getInputs().createButton.setEnabled(true);
+      // Check if Field is empty
+      if (newValue === "") {
+        inputControl.setValueState(sap.ui.core.ValueState.Error);
+        inputControl.setValueStateText(this.getView().getModel("i18n").getResourceBundle().getText("cantBeEmpty"));
+      }
+      // Only check for duplicate if Inputfield is identification/id
+      if (inputControl === this.getInputs().inputSpId && this.spIdDuplicate(newValue)) {
+        inputControl.setValueState(sap.ui.core.ValueState.Error);
+        inputControl.setValueStateText(this.getView().getModel("i18n").getResourceBundle().getText("duplicate"));
+      }
+      // Only check for duplicate if Inputfield is roles/name
+      if (inputControl === this.getInputs().inputRoleName && this.roleNameDuplicate(newValue)) {
+        inputControl.setValueState(sap.ui.core.ValueState.Error);
+        inputControl.setValueStateText(this.getView().getModel("i18n").getResourceBundle().getText("roleNameDuplicate"));
+      }
+      //   // Only check for duplicate if Inputfield is descriptor/endpoints/address
+      //   if (inputControl === this.getInputs().endpointAddress && this.epAddressDuplicate()) {
+      //     inputControl.setValueState(sap.ui.core.ValueState.Error);
+      //     inputControl.setValueStateText(this.getView().getModel("i18n").getResourceBundle().getText("addressDuplicate"));
+      //   }
+
+      this.checkCreateButton();
+      this.checkAddRoleButton();
+
+
+
+    },
+    // Disable CreateButton if ValueState of spId or endpointAdress is Error & enable if not
+    checkCreateButton: function () {
+      if (this.getInputs().inputSpId.getValueState() == "Error") { // || this.getInputs().endpointAddress.getValueState() == "Error") {
+        this.getInputs().createButton.setEnabled(false);
+      } else {
+        this.getInputs().createButton.setEnabled(true);
+      }
+    },
+
+    // Disable AddRoleButton if ValueState of roleName, spId or endpointAdress is Error & enable if not
+    checkAddRoleButton: function () {
+      if (this.getInputs().inputRoleName.getValueState() == "Error") { // || this.getInputs().endpointAddress.getValueState() == "Error") {
+        this.getInputs().addRoleButton.setEnabled(false);
+      } else {
+        this.getInputs().addRoleButton.setEnabled(true);
+      }
+    },
+
+    //-----------------End Input Validation--------------------------//
+
+    resetScreenToInitial: function () {
+      this.getView().byId("InputRoleName").setValue("");
+      this.resetDescriptorDropdown();
+      this.initiateModel();
+      this.disableSplitscreen();
+      this.getInputs().inputSpId.setValueState(sap.ui.core.ValueState.None);
+      this.getInputs().inputRoleName.setValueState(sap.ui.core.ValueState.None);
+      //this.getInputs().endpointAddress.setValueState(sap.ui.core.ValueState.None);
+      this.checkCreateButton();
+    },
+
+    onCancelPress: function () {
+      var oHistory = History.getInstance();
+      var sPreviousHash = oHistory.getPreviousHash();
+
+      if (sPreviousHash !== undefined) {
+        window.history.go(-1);
+      } else {
+        var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+        oRouter.navTo("overview", true);
+      }
+      this.resetScreenToInitial();
+      MessageToast.show(this.getView().getModel("i18n").getResourceBundle().getText("canceled"));
+    }
+
+  });
 
 });
