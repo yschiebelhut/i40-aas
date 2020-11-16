@@ -81,40 +81,14 @@ sap.ui.define([
     },
 
     onAddDescriptorDropdown: function () {
+      var oController = this.getView().getController();
       var that = this;
       var oSelect = new sap.m.Select({
         forceSelection: false,
         width: "250px",
-        //change: "this.onSelect(oEvent)"
-
-        // function (oEvent) {
-        //   debugger;
-        //   var id = oEvent.getParameter("id");
-        //   var newSelectedItemText = oEvent.getParameter('selectedItem').getText();
-        //   var inputControl = that.getView().byId(id);
-        //   var descriptorDropdowns = that.getInputs().aasDescriptorSelect.getContent();
-
-        //   inputControl.setValueState(sap.ui.core.ValueState.None);
-        //   that.getInputs().addRoleButton.setEnabled(true);
-
-
-        //   if (typeof descriptorDropdowns !== 'undefined' && descriptorDropdowns.length > 0) {
-        //     var count = 0;
-        //     for (var i = 0; i < descriptorDropdowns.length; i++) {
-        //       if (descriptorDropdowns[i].getItems()[0].getSelectedItem().getText() !== 'undefined' && newSelectedItemText === descriptorDropdowns[i].getItems()[0].getSelectedItem().getText()) {
-        //         count++;
-        //         // count = 1 is its self -> count > 1 means there is a duplicate
-        //         if (count > 1) {
-        //           inputControl.setValueState(sap.ui.core.ValueState.Error);
-        //           inputControl.setValueStateText(that.getView().getModel("i18n").getResourceBundle().getText("descriptorDuplicate"));
-        //         } else {
-        //           inputControl.setValueState(sap.ui.core.ValueState.None);
-        //         }
-        //       }
-        //     }
-        //   }
-
-        // },
+        change: function (oEvent) {
+          oController.onSelect(oEvent)
+        }
 
       });
       var oItemTemplate = new sap.ui.core.Item({
@@ -129,8 +103,6 @@ sap.ui.define([
         template: oItemTemplate,
         sorter: oSorter,
         templateShareable: true
-
-
       });
 
       var delIcon = new sap.ui.core.Icon({
@@ -143,18 +115,6 @@ sap.ui.define([
         items: [oSelect, delIcon]
       });
       this._oPnl.addContent(_oCcLayout);
-
-      // var descriptorDropdowns = this.getInputs().aasDescriptorSelect.getContent();
-
-      // if (typeof descriptorDropdowns !== 'undefined' && descriptorDropdowns.length > 0) {
-
-      //   for (var i = 0; i < descriptorDropdowns.length; i++) {
-      //     var select = descriptorDropdowns[i].getItems()[0];
-      //     select.attachChange(this.onSelect())
-
-      //   }
-
-      // }
 
     },
 
@@ -171,13 +131,13 @@ sap.ui.define([
         this.getInputs().inputRoleName.setValueStateText(this.getView().getModel("i18n").getResourceBundle().getText("cantBeEmpty"));
         MessageToast.show(this.getView().getModel("i18n").getResourceBundle().getText("cantBeEmpty"));
         this.checkAddRoleButton();
-      } else if (this.aasDescriptorDuplicateOrEmpty()) { //TODO Ändern auf aasDescriptorDuplicateOrEmpty
-        debugger;
-        MessageToast.show(this.getView().getModel("i18n").getResourceBundle().getText("descriptorDuplicateOrEmpty"));
+      } else if (this.aasDescriptorDuplicateOrEmpty()) {
+        MessageToast.show(this.getView().getModel("i18n").getResourceBundle().getText("descriptorDuplicateOrEmpty"), {
+          duration: 5000
+        });
         for (var i = 0; i < descriptorDropdowns.length; i++) {
           descriptorDropdowns[i].getItems()[0].setValueState(sap.ui.core.ValueState.Error);
-          descriptorDropdowns[i].getItems()[0].setValueStateText(this.getView().getModel("i18n").getResourceBundle().getText("descriptorDuplicate"));
-          //descriptorDropdowns[j].getItems()[0].getSelectedItem().getText()
+          descriptorDropdowns[i].getItems()[0].setValueStateText(this.getView().getModel("i18n").getResourceBundle().getText("descriptorDuplicateOrEmpty"));
         }
       } else {
         var oModel = this.getView().getModel();
@@ -188,17 +148,7 @@ sap.ui.define([
         var aMainObjectArray = new Array();
         var oObject = {};
 
-        //-------count of the Selects-----
-        //console.log(this.getView().byId("idPnl").getContent().length);
-
-        //--------access first Select------
-        //console.log(this.getView().byId("idPnl").getContent()[0].getItems()[0].getValue());
-
-        //--------access second Select-------
-        //console.log(this.getView().byId("idPnl").getContent()[1].getItems()[0].getValue());
-
         for (var i = 0; i < descriptorDropdowns.length; i++) {
-          //console.log(this.getView().byId("idPnl").getContent()[i].getItems()[0].getValue());
           oObject["id"] = descriptorDropdowns[i].getItems()[0].getSelectedItem().getText();
           aMainObjectArray.push(JSON.parse(JSON.stringify(oObject)));
         }
@@ -277,19 +227,6 @@ sap.ui.define([
       this.showDetailsOfRoleWithIndex(idx);
     },
 
-    onNavBack: function () {
-      var oHistory = History.getInstance();
-      var sPreviousHash = oHistory.getPreviousHash();
-
-      if (sPreviousHash !== undefined) {
-        window.history.go(-1);
-      } else {
-        var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-        oRouter.navTo("overview", true);
-      }
-
-    },
-
     onCreateSemanticProtocol: function () {
       if (this.getInputs().inputSpId.getValue() === "") {
         this.getInputs().inputSpId.setValueState(sap.ui.core.ValueState.Error);
@@ -328,17 +265,6 @@ sap.ui.define([
 
     },
 
-    resetDescriptorDropdown: function () {
-      var oView = this.getView();
-      var oPanel = oView.byId("idPnl");
-      var oCtx = oPanel.getContent();
-
-      for (var i = 0; i < oCtx.length; i++) {
-        oCtx[i].destroy(true);
-      }
-      this.onAddDescriptorDropdown();
-    },
-
     //-----------------Begin Input Validation--------------------------//
     getInputs: function () {
       return {
@@ -347,7 +273,6 @@ sap.ui.define([
         createButton: this.getView().byId("CreateButton"),
         addRoleButton: this.getView().byId("AddRoleButton"),
         aasDescriptorSelect: this.getView().byId("idPnl")
-        //endpointAddress: this.getView().byId("EndpointAddress"),
       }
     },
 
@@ -388,11 +313,8 @@ sap.ui.define([
 
     },
 
-
-
-    // Check if a AASDescriptor already is choosen in a other dropdown
+    // Check if a AASDescriptor already is choosen in a other dropdown or a dropdown ist empty
     aasDescriptorDuplicateOrEmpty: function () {
-      debugger;
       var descriptorDropdowns = this.getInputs().aasDescriptorSelect.getContent();
 
 
@@ -401,12 +323,13 @@ sap.ui.define([
         for (var i = 0; i < Math.round(descriptorDropdowns.length / 2); i++) { //Just need to compare the first half of the objects with all other objects
           var count = 0;
           for (var j = 0; j < descriptorDropdowns.length; j++) {
+            //Return true if dropdown j is empty
             if (descriptorDropdowns[j].getItems()[0].getSelectedItem() === null) {
               return true;
             } else if (descriptorDropdowns[i].getItems()[0].getSelectedItem().getText() ===
               descriptorDropdowns[j].getItems()[0].getSelectedItem().getText()) {
               count++;
-              // count = 1 is its self -> count > 1 means there is a duplicate
+              // count = 1 if its self -> count > 1 means there is a duplicate
               if (count > 1) {
                 return true;
               }
@@ -420,34 +343,34 @@ sap.ui.define([
     },
 
     //Shows a red border around the select field as long as a duplicate selection is found
-    // onSelect(oEvent) {
-    //   debugger;
-    //   var id = oEvent.getParameter("id");
-    //   var newSelectedItemText = oEvent.getParameter('selectedItem').getText();
-    //   var inputControl = this.getView().byId(id);
-    //   var descriptorDropdowns = this.getInputs().aasDescriptorSelect.getContent();
+    onSelect(oEvent) {
+      debugger;
+      var id = oEvent.getParameter("id");
+      var newSelectedItemText = oEvent.getParameter('selectedItem').getText();
+      var inputControl = sap.ui.getCore().byId(id);
+      var descriptorDropdowns = this.getInputs().aasDescriptorSelect.getContent();
 
-    //   inputControl.setValueState(sap.ui.core.ValueState.None);
-    //   this.getInputs().addRoleButton.setEnabled(true);
+      inputControl.setValueState(sap.ui.core.ValueState.None);
+      this.getInputs().addRoleButton.setEnabled(true);
 
 
-    //   if (typeof descriptorDropdowns !== 'undefined' && descriptorDropdowns.length > 0) {
-    //     var count = 0;
-    //     for (var i = 0; i < descriptorDropdowns.length; i++) {
-    //       if (descriptorDropdowns[i].getItems()[0].getSelectedItem() !== 'null' && newSelectedItemText === descriptorDropdowns[i].getItems()[0].getSelectedItem().getText()) {
-    //         count++;
-    //         // count = 1 is its self -> count > 1 means there is a duplicate
-    //         if (count > 1) {
-    //           inputControl.setValueState(sap.ui.core.ValueState.Error);
-    //           inputControl.setValueStateText(this.getView().getModel("i18n").getResourceBundle().getText("descriptorDuplicate"));
-    //         } else {
-    //           inputControl.setValueState(sap.ui.core.ValueState.None);
-    //         }
-    //       }
-    //     }
-    //   }
+      if (typeof descriptorDropdowns !== 'undefined' && descriptorDropdowns.length > 0) {
+        var count = 0;
+        for (var i = 0; i < descriptorDropdowns.length; i++) {
+          if (descriptorDropdowns[i].getItems()[0].getSelectedItem() !== 'null' && newSelectedItemText === descriptorDropdowns[i].getItems()[0].getSelectedItem().getText()) {
+            count++;
+            // count = 1 is its self -> count > 1 means there is a duplicate
+            if (count > 1) {
+              inputControl.setValueState(sap.ui.core.ValueState.Error);
+              inputControl.setValueStateText(this.getView().getModel("i18n").getResourceBundle().getText("descriptorDuplicateOrEmpty"));
+            } else {
+              inputControl.setValueState(sap.ui.core.ValueState.None);
+            }
+          }
+        }
+      }
 
-    // },
+    },
 
 
     //Shows a red border around the input field as long as a empty or duplicate entry is found
@@ -473,21 +396,13 @@ sap.ui.define([
         inputControl.setValueState(sap.ui.core.ValueState.Error);
         inputControl.setValueStateText(this.getView().getModel("i18n").getResourceBundle().getText("roleNameDuplicate"));
       }
-      //   // Only check for duplicate if Inputfield is descriptor/endpoints/address
-      //   if (inputControl === this.getInputs().endpointAddress && this.epAddressDuplicate()) {
-      //     inputControl.setValueState(sap.ui.core.ValueState.Error);
-      //     inputControl.setValueStateText(this.getView().getModel("i18n").getResourceBundle().getText("addressDuplicate"));
-      //   }
-
       this.checkCreateButton();
       this.checkAddRoleButton();
-
-
 
     },
     // Disable CreateButton if ValueState of spId or endpointAdress is Error & enable if not
     checkCreateButton: function () {
-      if (this.getInputs().inputSpId.getValueState() == "Error") { // || this.getInputs().endpointAddress.getValueState() == "Error") {
+      if (this.getInputs().inputSpId.getValueState() == "Error") {
         this.getInputs().createButton.setEnabled(false);
       } else {
         this.getInputs().createButton.setEnabled(true);
@@ -496,7 +411,7 @@ sap.ui.define([
 
     // Disable AddRoleButton if ValueState of roleName, spId or endpointAdress is Error & enable if not
     checkAddRoleButton: function () {
-      if (this.getInputs().inputRoleName.getValueState() == "Error") { // || this.getInputs().endpointAddress.getValueState() == "Error") {
+      if (this.getInputs().inputRoleName.getValueState() == "Error") {
         this.getInputs().addRoleButton.setEnabled(false);
       } else {
         this.getInputs().addRoleButton.setEnabled(true);
@@ -512,8 +427,30 @@ sap.ui.define([
       this.disableSplitscreen();
       this.getInputs().inputSpId.setValueState(sap.ui.core.ValueState.None);
       this.getInputs().inputRoleName.setValueState(sap.ui.core.ValueState.None);
-      //this.getInputs().endpointAddress.setValueState(sap.ui.core.ValueState.None);
       this.checkCreateButton();
+    },
+
+    resetDescriptorDropdown: function () {
+      var oView = this.getView();
+      var oPanel = oView.byId("idPnl");
+      var oCtx = oPanel.getContent();
+
+      for (var i = 0; i < oCtx.length; i++) {
+        oCtx[i].destroy(true);
+      }
+      this.onAddDescriptorDropdown();
+    },
+
+    onNavBack: function () {
+      var oHistory = History.getInstance();
+      var sPreviousHash = oHistory.getPreviousHash();
+
+      if (sPreviousHash !== undefined) {
+        window.history.go(-1);
+      } else {
+        var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+        oRouter.navTo("overview", true);
+      }
     },
 
     onCancelPress: function () {
