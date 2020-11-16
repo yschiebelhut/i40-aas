@@ -81,13 +81,12 @@ sap.ui.define([
     },
 
     onAddDescriptorDropdown: function () {
-      debugger;
       var that = this;
       var oSelect = new sap.m.Select({
         forceSelection: false,
         width: "250px",
         //change: "this.onSelect(oEvent)"
-        
+
         // function (oEvent) {
         //   debugger;
         //   var id = oEvent.getParameter("id");
@@ -172,9 +171,9 @@ sap.ui.define([
         this.getInputs().inputRoleName.setValueStateText(this.getView().getModel("i18n").getResourceBundle().getText("cantBeEmpty"));
         MessageToast.show(this.getView().getModel("i18n").getResourceBundle().getText("cantBeEmpty"));
         this.checkAddRoleButton();
-      } else if (this.aasDescriptorDuplicate()) { //TODO Ändern auf aasDescriptorDuplicate
+      } else if (this.aasDescriptorDuplicateOrEmpty()) { //TODO Ändern auf aasDescriptorDuplicateOrEmpty
         debugger;
-        MessageToast.show(this.getView().getModel("i18n").getResourceBundle().getText("descriptorDuplicate"));
+        MessageToast.show(this.getView().getModel("i18n").getResourceBundle().getText("descriptorDuplicateOrEmpty"));
         for (var i = 0; i < descriptorDropdowns.length; i++) {
           descriptorDropdowns[i].getItems()[0].setValueState(sap.ui.core.ValueState.Error);
           descriptorDropdowns[i].getItems()[0].setValueStateText(this.getView().getModel("i18n").getResourceBundle().getText("descriptorDuplicate"));
@@ -392,7 +391,8 @@ sap.ui.define([
 
 
     // Check if a AASDescriptor already is choosen in a other dropdown
-    aasDescriptorDuplicate: function () {
+    aasDescriptorDuplicateOrEmpty: function () {
+      debugger;
       var descriptorDropdowns = this.getInputs().aasDescriptorSelect.getContent();
 
 
@@ -401,7 +401,9 @@ sap.ui.define([
         for (var i = 0; i < Math.round(descriptorDropdowns.length / 2); i++) { //Just need to compare the first half of the objects with all other objects
           var count = 0;
           for (var j = 0; j < descriptorDropdowns.length; j++) {
-            if (descriptorDropdowns[i].getItems()[0].getSelectedItem().getText() ===
+            if (descriptorDropdowns[j].getItems()[0].getSelectedItem() === null) {
+              return true;
+            } else if (descriptorDropdowns[i].getItems()[0].getSelectedItem().getText() ===
               descriptorDropdowns[j].getItems()[0].getSelectedItem().getText()) {
               count++;
               // count = 1 is its self -> count > 1 means there is a duplicate
